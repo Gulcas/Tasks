@@ -30,9 +30,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -56,6 +59,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -108,11 +112,64 @@ class MainActivity : ComponentActivity() {
 //            MyFAB()
 //            MyModifierClickable()
 //            MyShowHide()
-            MyShowHideExercise()
+//            MyShowHideExercise()
+            MyTextField()
         }
     }
+
+    @Composable
+    fun MyTextField() {
+        var text by remember { mutableStateOf("") }
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            label = {
+                Text(text = "Wpisz tekst")
+            }
+        )
+    }
+
     @Composable
     fun MyShowHideExercise() {
+        var isSettingsShowed by remember { mutableStateOf(false) }
+        var volumeValue by remember { mutableStateOf(0f) }
+        Column() {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isSettingsShowed,
+                    onCheckedChange = { value -> isSettingsShowed = value },
+                )
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings Icon",
+                )
+                Text(text = "Ustawienia")
+            }
+            if (isSettingsShowed) {
+                Column() {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Min"
+                        )
+                        Slider(
+                            value = volumeValue,
+                            onValueChange = { volumeValue = it },
+                            modifier = Modifier
+                                .width(300.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Notifications,
+                            contentDescription = "Max",
+                            tint = if (volumeValue > 0.8f) Color.Red else Color.Black
+                        )
+                    }
+                    if (volumeValue > 0.8f) {
+                        Text(text = "Uwaga, głośno!", color = Color.Red)
+                    }
+                }
+            }
+        }
     }
 
     @Composable
@@ -120,10 +177,10 @@ class MainActivity : ComponentActivity() {
         var isShowed by remember { mutableStateOf(false) }
 
         Row() {
-            Button(onClick = {isShowed = !isShowed}) {
-                Text(text = if(isShowed)"Pokazany" else "Ukryty")
+            Button(onClick = { isShowed = !isShowed }) {
+                Text(text = if (isShowed) "Pokazany" else "Ukryty")
             }
-            if(isShowed) {
+            if (isShowed) {
                 Text(text = "Ukryty tekst")
             }
         }
