@@ -1,5 +1,7 @@
 package com.rafal.tasks
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.CheckBox
 import android.widget.RadioButton
@@ -23,13 +25,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -50,6 +61,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Slider
@@ -60,9 +73,11 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -71,8 +86,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -113,8 +132,340 @@ class MainActivity : ComponentActivity() {
 //            MyModifierClickable()
 //            MyShowHide()
 //            MyShowHideExercise()
-            MyTextField()
+//            MyTextField()
+//            MyOutlinedTextField()
+//            MyTextFieldExercise()
+//            MyTextFieldExerciseCheckLength()
+//            MyLazyColumn()
+//            MyLazyRow()
+//            MyLazyItem()
+//            MyLazyVerticalGrid()
+//            MyLazyHorizontalGrid()
+//            MyLazyColumnButtonExercise()
+//            MyLazyRowClickExercise()
+//            MyLazyColumRowExercise()
+//            MyLazyGridExercise()
+//            MyHomeActivityView()
+            MyActivityExercise()
         }
+    }
+
+    @Composable
+    fun MyActivityExercise() {
+        var text by remember { mutableStateOf("")
+        }
+        val context = LocalContext.current
+        val intent = Intent(context, MyExerciseActivity::class.java)
+        intent.putExtra("exercise_value", text)
+
+        Column() {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { value ->
+                    text = value
+                },
+                label = { Text(text = "Wpisz tekst") },
+            )
+            Button(onClick = { startActivity(intent) }) {
+                Text(text = "Przejdź do MyExerciseActivity")
+            }
+        }
+
+    }
+
+    @Composable
+    fun MyHomeActivityView() {
+        val context: Context = LocalContext.current
+        val intent: Intent = Intent(context, HomeActivity::class.java)
+        intent.putExtra("welcome_value", "Przesłane z MainActivity")
+
+        Button(onClick = { startActivity(intent) }) {
+            Text(text = "Home Activity")
+        }
+    }
+
+    @Composable
+    fun MyLazyGridExercise() {
+        var count by remember { mutableStateOf(3) }
+
+        Column() {
+            Row() {
+                Button(onClick = { count = 1 }) {
+                    Text(text = "1")
+                }
+                Button(onClick = { count = 2 }) {
+                    Text(text = "2")
+                }
+                Button(onClick = { count = 5 }) {
+                    Text(text = "5")
+                }
+            }
+
+            LazyVerticalGrid(columns = GridCells.Fixed(count)) {
+                items(count = 100) { index ->
+                    MyLazyItemFunkcja(index)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyColumRowExercise() {
+        LazyColumn() {
+            items(count = 100) { columnIndex ->
+                LazyRow() {
+                    items(count = 100) { rowIndex ->
+                        MyLazyItemFunkcja(number = columnIndex * rowIndex)
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyRowClickExercise() {
+        var selectedIndex by remember { mutableStateOf(-1) } //delegat by
+
+        LazyRow() {
+            items(count = 100) { index ->
+                Surface(
+                    border = BorderStroke(1.dp, Color.Black),
+                    color = if (selectedIndex == index) Color.LightGray else Color.White,
+                    modifier = Modifier
+                        .clickable { selectedIndex = index }
+                ) {
+                    Text(text = "$index", modifier = Modifier.padding(10.dp))
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyColumnButtonExercise() {
+        var counter by remember { mutableStateOf(0) } //delegat by
+        val itemList = remember { mutableStateListOf<Int>() }
+
+        Column() {
+            Button(
+                onClick = { itemList.add(counter++) }) { //dodanie elementu do listy po kliknięciu
+                Text(text = "Add")
+            }
+            LazyColumn() {
+                items(items = itemList) { item ->
+                    Text(text = "Item $item")
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyHorizontalGrid() {
+        LazyHorizontalGrid(
+            rows = GridCells.Adaptive(minSize = 50.dp),
+            contentPadding = PaddingValues(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            items(count = 100) { index ->
+                MyLazyItemFunkcja(index)
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyVerticalGrid() {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            contentPadding = PaddingValues(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            items(count = 100) { index ->
+                MyLazyItemFunkcja(index)
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyItem() {
+        LazyRow(
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(count = 100) { index ->
+                MyLazyItemFunkcja(index)
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyItemFunkcja(number: Int) {
+        Card(
+            border = BorderStroke(1.dp, Color.Black),
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = Icons.Default.List, contentDescription = null)
+                Text(text = "Item $number")
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyRow() {
+
+        val itemList = remember { mutableStateListOf("A", "B", "C", "D") }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            item { Text(text = "A") }
+            items(count = 4) { index ->
+                Text(text = "$index")
+            }
+            items(items = itemList) { item ->
+                Text(text = "$item")
+            }
+        }
+    }
+
+    @Composable
+    fun MyLazyColumn() {
+
+        val itemList = remember { mutableStateListOf(1, 5, 9, 90, 22) }
+        itemList.add(123) //dodanie elementu do listy
+
+        var emptyList = remember { mutableStateListOf<Int>() }//pusta lista
+
+        val itemListNonMutable = listOf(2, 4, 5, 4) //lista niezmienna
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(top = 4.dp, start = 10.dp),
+        ) {
+            item { Text(text = "Item A") }
+            item { Text(text = "Item B") }
+
+            for (i in 0..22) {
+                item { Text(text = "for Item $i") }
+            }
+
+            items(count = 33) { index ->
+                Text(text = "items Item $index")
+            }
+
+            items(items = itemList) { item ->
+                Text(text = "itemsList items $item")
+            }
+
+        }
+    }
+
+    @Composable
+    fun MyTextFieldExerciseCheckLength() {
+        var text by remember { mutableStateOf("") }
+        var isTextToLong by remember { mutableStateOf(false) }
+        val maxChar = 10
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            TextField(
+                value = text,
+                onValueChange = { value ->
+                    text = value
+                    isTextToLong = text.length > maxChar
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                isError = isTextToLong,
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                if (isTextToLong) {
+                    Text(
+                        text = "Za długi tekst",
+                        color = Color.Red,
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                    )
+                }
+                Text(
+                    text = "${text.length}/$maxChar",
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun MyTextFieldExercise() {
+        var emailText by remember { mutableStateOf("") }
+        var passwordText by remember { mutableStateOf("") }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            OutlinedTextField(
+                value = emailText,
+                onValueChange = { emailText = it },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = null
+                    )
+                },
+                label = { Text(text = "Email") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                isError = !android.util.Patterns.EMAIL_ADDRESS.matcher(emailText).matches(),
+            )
+
+            Spacer(
+                modifier = Modifier
+                    .height(20.dp)
+            )
+
+            OutlinedTextField(
+                value = passwordText,
+                onValueChange = { passwordText = it },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null
+                    )
+                },
+                label = { Text(text = "Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                isError = passwordText.length < 6,
+            )
+        }
+    }
+
+    @Composable
+    fun MyOutlinedTextField() {
+        var text by remember { mutableStateOf("") }
+        OutlinedTextField(
+            value = text, onValueChange = { text = it },
+            colors = OutlinedTextFieldDefaults.colors()
+        )
     }
 
     @Composable
@@ -125,7 +476,23 @@ class MainActivity : ComponentActivity() {
             onValueChange = { text = it },
             label = {
                 Text(text = "Wpisz tekst")
-            }
+            },
+            placeholder = {
+                Text(text = "Tekst placeholder")
+            },
+            leadingIcon = {
+                Icon(imageVector = Icons.Default.Lock, contentDescription = null)
+            },
+            trailingIcon = {
+                Icon(imageVector = Icons.Default.Done, contentDescription = null)
+            },
+            isError = true,
+            colors = TextFieldDefaults.colors(),
+            textStyle = TextStyle(color = Color.Red),
+//            singleLine = true,
+            maxLines = 2,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            visualTransformation = PasswordVisualTransformation(),
         )
     }
 
