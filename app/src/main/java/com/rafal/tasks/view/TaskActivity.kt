@@ -125,6 +125,7 @@ class TaskActivity : ComponentActivity() {
                     val intent = Intent(context, HomeActivity::class.java)
                     intent.putExtra("task", task) //obiekty muszą być serializowane
                     startActivity(intent)
+                    finish()
                 }
             ) {
                 Text(text = "Add Task")

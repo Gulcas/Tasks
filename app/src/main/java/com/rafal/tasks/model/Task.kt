@@ -1,9 +1,11 @@
 package com.rafal.tasks.model
 
 import androidx.compose.ui.graphics.Color
+import com.squareup.moshi.JsonClass
 import java.io.Serializable
 import java.util.UUID
 
+@JsonClass(generateAdapter = true) //generuje adapter do serializacji
 data class Task(
     val title: String,
     val description: String,

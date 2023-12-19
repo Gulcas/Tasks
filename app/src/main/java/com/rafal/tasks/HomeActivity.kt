@@ -2,6 +2,7 @@ package com.rafal.tasks
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,28 +31,65 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rafal.tasks.api.ServiceConfiguration
+import com.rafal.tasks.api.TaskNetworkRepository
 import com.rafal.tasks.model.Task
+import com.rafal.tasks.util.StorageOperations
 import com.rafal.tasks.view.TaskActivity
+import kotlinx.coroutines.runBlocking
 
 
 var taskList =
     mutableListOf<Task>() //lista zadań współdzielona między activity, w obrębie aplikacji
+val taskNetworkRepository = TaskNetworkRepository(ServiceConfiguration.taskService)
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-//        val welcomeValue: String? = intent.getStringExtra("welcome_value")
+        getAllTasksViaNetwork()
+
         val task =
             intent.getSerializableExtra("task") as? Task //pobieramy obiekt z intentu i rzutujemy na Task
         task?.let {
-//            Toast.makeText(this, "Task: $task", Toast.LENGTH_SHORT).show()
-            taskList.add(it)
+
+            taskList.add(task)
+            StorageOperations.writeTaskList(this, taskList)
+
+            addTaskViaNetwork(task)
+
         }
 
         setContent {
 //            HomeText(welcomeValue)
             HomeView()
+        }
+    }
+
+    private fun getAllTasksViaNetwork() {
+        val context = this
+        runBlocking {
+            try {
+                taskList = taskNetworkRepository.getAllTasks().toMutableList()
+                StorageOperations.writeTaskList(context, taskList)
+            } catch (e: Exception) {
+                Log.e("HomeActivity", "Error: $e")
+                taskList = StorageOperations.readTaskList(context).toMutableList()
+                Toast.makeText(context, "Dane z pamięci lokalnej", Toast.LENGTH_SHORT).show()
+            }
+
+        } //pobieramy wszystkie zadania z serwera
+    }
+
+    private fun addTaskViaNetwork(task: Task) {
+        val context = this
+        runBlocking {
+            try {
+                taskNetworkRepository.addTask(task)
+            } catch (e: Exception) {
+                Log.e("HomeActivity", "Error: $e")
+                Toast.makeText(context, "Problem, spróbuj jeszcze raz", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -105,19 +143,29 @@ class HomeActivity : ComponentActivity() {
     @Composable
     fun HomeView() {
 
-        val context = LocalContext.current
+        val context = LocalContext.current //pobieramy context, z onClicka nie możemy tego zrobić
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
         ) {
 
-            TaskListView()
+            if (taskList.isEmpty()) {
+                Text(
+                    text = " Empty List",
+                    fontSize = 20.sp,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            } else {
+                TaskListView()
+            }
 
             FloatingActionButton(
                 onClick = {
                     val intent = Intent(context, TaskActivity::class.java)
                     startActivity(intent)
+                    finish() //zamykamy activity
                 },
                 modifier = Modifier
                     .padding(16.dp)
