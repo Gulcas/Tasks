@@ -7,6 +7,7 @@ import retrofit2.http.POST
 
 interface TaskService {
 
+    //method and endpoint in ""
     @POST("tasks.json")
     suspend fun add(@Body task: Task)
 

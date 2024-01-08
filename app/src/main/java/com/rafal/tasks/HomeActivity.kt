@@ -31,22 +31,33 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Database
 import com.rafal.tasks.api.ServiceConfiguration
 import com.rafal.tasks.api.TaskNetworkRepository
+import com.rafal.tasks.database.DatabaseConfiguration
+import com.rafal.tasks.database.TaskDatabaseRepository
 import com.rafal.tasks.model.Task
 import com.rafal.tasks.util.StorageOperations
 import com.rafal.tasks.view.TaskActivity
+import com.rafal.tasks.viewmodel.TaskViewModel
 import kotlinx.coroutines.runBlocking
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
-var taskList =
-    mutableListOf<Task>() //lista zadań współdzielona między activity, w obrębie aplikacji
-val taskNetworkRepository = TaskNetworkRepository(ServiceConfiguration.taskService)
+//var taskList = mutableListOf<Task>()
 
 class HomeActivity : ComponentActivity() {
+
+//    val taskDataBaseRepository by inject<TaskDatabaseRepository>()
+//    val taskNetworkRepository by inject<TaskNetworkRepository>()
+    val taskViewModel by viewModel<TaskViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MyTasksApplication", "HomeActivity onCreate()")
 
+        taskViewModel.getAllTasks()
+/*
         getAllTasksViaNetwork()
 
         val task =
@@ -54,15 +65,34 @@ class HomeActivity : ComponentActivity() {
         task?.let {
 
             taskList.add(task)
-            StorageOperations.writeTaskList(this, taskList)
+//            StorageOperations.writeTaskList(this, taskList)
+            insertTaskToDatabase(task)
 
             addTaskViaNetwork(task)
 
         }
+        */
 
         setContent {
 //            HomeText(welcomeValue)
             HomeView()
+        }
+    }
+/*
+    private fun insertTaskToDatabase(task: Task) {
+        runBlocking {
+            taskDataBaseRepository.insertTask(task)
+        }
+    }
+    private fun getAllTasksFromDatabase() {
+        runBlocking {
+            taskList = taskDataBaseRepository.getAllTasks().toMutableList()
+        }
+    }
+
+    private fun insertAllTasksToDatabase(taskList: List<Task>) {
+        runBlocking {
+            taskDataBaseRepository.insertAllTask(taskList)
         }
     }
 
@@ -71,10 +101,12 @@ class HomeActivity : ComponentActivity() {
         runBlocking {
             try {
                 taskList = taskNetworkRepository.getAllTasks().toMutableList()
-                StorageOperations.writeTaskList(context, taskList)
+//                StorageOperations.writeTaskList(context, taskList)
+                insertAllTasksToDatabase(taskList)
             } catch (e: Exception) {
                 Log.e("HomeActivity", "Error: $e")
-                taskList = StorageOperations.readTaskList(context).toMutableList()
+//                taskList = StorageOperations.readTaskList(context).toMutableList()
+                getAllTasksFromDatabase()
                 Toast.makeText(context, "Dane z pamięci lokalnej", Toast.LENGTH_SHORT).show()
             }
 
@@ -92,7 +124,7 @@ class HomeActivity : ComponentActivity() {
             }
         }
     }
-
+*/
     @Composable
     fun TaskListView() {
         Column(
@@ -111,7 +143,7 @@ class HomeActivity : ComponentActivity() {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(items = taskList) { task ->
+                items(items = taskViewModel.taskList) { task ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = task.colorType.color),
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 10.dp)
@@ -150,7 +182,7 @@ class HomeActivity : ComponentActivity() {
                 .fillMaxSize()
         ) {
 
-            if (taskList.isEmpty()) {
+            if (taskViewModel.taskList.isEmpty()) {
                 Text(
                     text = " Empty List",
                     fontSize = 20.sp,
