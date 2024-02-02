@@ -13,4 +13,7 @@ class TaskDatabaseRepository(private val db: AppDatabase) {
     suspend fun getAllTasks(): List<Task> {
         return db.taskDao().getAll()
     }
+    suspend fun deleteTask(task: Task) {
+        db.taskDao().delete(task)
+    }
 }
