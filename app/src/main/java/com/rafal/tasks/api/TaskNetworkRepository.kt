@@ -15,4 +15,7 @@ class TaskNetworkRepository(private val taskService: TaskService) {
     suspend fun deleteTask(taskId: String) {
         taskService.deleteTask(taskId)
     }
+    suspend fun editTask(task: Task) {
+        taskService.editTask(task.id, task)
+    }
 }

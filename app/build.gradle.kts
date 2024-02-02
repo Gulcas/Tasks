@@ -87,4 +87,6 @@ dependencies {
 
     val koin_version = "3.5.0"
     implementation ("io.insert-koin:koin-android:$koin_version")
+    implementation ("com.google.accompanist:accompanist-permissions:0.32.0")
+    implementation("io.coil-kt:coil:2.5.0")
 }

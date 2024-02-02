@@ -2,7 +2,6 @@ package com.rafal.tasks.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,8 +18,9 @@ class TaskViewModel(
 ) : ViewModel() {
 
     var taskList by mutableStateOf(emptyList<Task>())
-    var addTaskStatus by mutableStateOf(TaskOperationStatus.UNKNOWN)
+    var addEditTaskStatus by mutableStateOf(TaskOperationStatus.UNKNOWN)
     var getAllTaskStatus by mutableStateOf(TaskOperationStatus.UNKNOWN)
+    var sendSmsTaskStatus by mutableStateOf<Task?>(null)
 
     fun getAllTasks() {
         viewModelScope.launch {
@@ -35,15 +35,16 @@ class TaskViewModel(
             }
         }
     }
+
     fun addTask(task: Task) {
         viewModelScope.launch {
             try {
-                addTaskStatus = TaskOperationStatus.LOADING
+                addEditTaskStatus = TaskOperationStatus.LOADING
                 val response: TaskIdResponse = taskNetworkRepository.addTask(task)
                 taskDatabaseRepository.insertTask(task.copy(id = response.name))
-                addTaskStatus = TaskOperationStatus.SUCCESS
+                addEditTaskStatus = TaskOperationStatus.SUCCESS
             } catch (e: Exception) {
-                addTaskStatus = TaskOperationStatus.ERROR
+                addEditTaskStatus = TaskOperationStatus.ERROR
             }
         }
     }
@@ -53,10 +54,34 @@ class TaskViewModel(
             try {
                 taskNetworkRepository.deleteTask(task.id)
                 taskDatabaseRepository.deleteTask(task)
-            } catch (e: Exception){
+                removeTaskFroList(task)
+            } catch (e: Exception) {
 
             }
         }
     }
 
+    private fun removeTaskFroList(task: Task) {
+//        val mutableTaskList = taskList.toMutableList()
+//        mutableTaskList.remove(task)
+//        taskList = mutableTaskList
+        //zapis powyżej robi to samo co ten poniżej
+        taskList.toMutableList().also {
+            it.remove(task)
+            taskList = it
+        }
+    }
+
+    fun editTask(task: Task) {
+        viewModelScope.launch {
+            try {
+                addEditTaskStatus = TaskOperationStatus.LOADING
+                taskNetworkRepository.editTask(task)
+                taskDatabaseRepository.editTask(task)
+                addEditTaskStatus = TaskOperationStatus.SUCCESS
+            } catch (e: Exception) {
+                addEditTaskStatus = TaskOperationStatus.ERROR
+            }
+        }
+    }
 }

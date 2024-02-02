@@ -6,8 +6,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,24 +22,30 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rafal.tasks.HomeActivity
+import com.rafal.tasks.R
 import com.rafal.tasks.model.ColorType
 import com.rafal.tasks.model.Task
 import com.rafal.tasks.model.TaskOperationStatus
+import com.rafal.tasks.ui.theme.Blue
+import com.rafal.tasks.ui.theme.TasksTheme
 import com.rafal.tasks.viewmodel.TaskViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -46,14 +54,21 @@ class TaskActivity : ComponentActivity() {
     val taskViewModel by viewModel<TaskViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val editTask: Task? = intent.getSerializableExtra("edit_task") as? Task
+
         setContent {
-            TaskView()
-            observeAddTaskStatus()
+            TasksTheme() {
+                Surface(Modifier.fillMaxSize()) {
+                    TaskView(editTask)
+                    observeAddTaskStatus()
+                }
+            }
         }
     }
 
     private fun observeAddTaskStatus() {
-        when (taskViewModel.addTaskStatus) {
+        when (taskViewModel.addEditTaskStatus) {
             TaskOperationStatus.SUCCESS -> {
                 val intent = Intent(this, HomeActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
@@ -70,14 +85,15 @@ class TaskActivity : ComponentActivity() {
     }
 
     @Composable
-    fun TaskView() {
-
+    fun TaskView(editTask: Task?) {
         val context = LocalContext.current
         val taskColors = ColorType.values() //wartości enuma
 
-        var currentColor by rememberSaveable { mutableStateOf(taskColors.first()) }
-        var titleText by rememberSaveable { mutableStateOf("") }
-        var descriptionText by rememberSaveable { mutableStateOf("") }
+        var currentColor by rememberSaveable {
+            mutableStateOf(editTask?.colorType ?: taskColors.first())
+        }
+        var titleText by rememberSaveable { mutableStateOf(editTask?.title ?: "") }
+        var descriptionText by rememberSaveable { mutableStateOf(editTask?.description ?: "") }
 
         Column(
             modifier = Modifier
@@ -95,23 +111,35 @@ class TaskActivity : ComponentActivity() {
                 colors = CardDefaults.cardColors(containerColor = currentColor.color), //pobiera kolor z enuma
                 elevation = CardDefaults.elevatedCardElevation(defaultElevation = 10.dp)
             ) {
+                val outlinedTextStyle = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.DarkGray
+                )
+
+                val outlinedTextFieldColors = OutlinedTextFieldDefaults.colors(
+                    focusedLabelColor = Blue,
+                    unfocusedBorderColor = Color.Gray
+                )
                 OutlinedTextField(
                     value = titleText,
                     onValueChange = { titleText = it },
                     label = { Text(text = "Title") },
-                    textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    textStyle = outlinedTextStyle,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(8.dp),
+                    colors = outlinedTextFieldColors
                 )
                 OutlinedTextField(
                     value = descriptionText,
                     onValueChange = { descriptionText = it },
                     label = { Text(text = "Description") },
-                    textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    textStyle = outlinedTextStyle,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(8.dp),
+                    colors = outlinedTextFieldColors
                 )
             }
             Spacer(
@@ -143,26 +171,35 @@ class TaskActivity : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxWidth(),
                 onClick = { //przypisanie wartości do zmiennych w modelu Task
-                    val task = Task(
-                        title = titleText,
-                        description = descriptionText,
-                        colorType = currentColor
-                    )
-//                    val intent = Intent(context, HomeActivity::class.java)
-//                    intent.putExtra("task", task) //obiekty muszą być serializowane
-//                    startActivity(intent)
-//                    finish()
-
-                    taskViewModel.addTask(task)
+                    if (editTask == null) {
+                        val task = Task(
+                            title = titleText,
+                            description = descriptionText,
+                            colorType = currentColor
+                        )
+                        taskViewModel.addTask(task)
+                    } else {
+                        val task = editTask.copy(
+                            title = titleText,
+                            description = descriptionText,
+                            colorType = currentColor
+                        )
+                        taskViewModel.editTask(task)
+                    }
                 }
             ) {
-                if (taskViewModel.addTaskStatus == TaskOperationStatus.LOADING) {
+                if (taskViewModel.addEditTaskStatus == TaskOperationStatus.LOADING) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
                 } else {
                     Text(text = "Save")
                 }
             }
+            Image(
+                painter = painterResource(R.drawable.mu),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+            )
         }
-
     }
 }

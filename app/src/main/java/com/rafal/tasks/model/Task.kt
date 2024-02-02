@@ -3,6 +3,9 @@ package com.rafal.tasks.model
 import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.rafal.tasks.ui.theme.CardGreen
+import com.rafal.tasks.ui.theme.CardRed
+import com.rafal.tasks.ui.theme.CardYellow
 import com.squareup.moshi.JsonClass
 import java.io.Serializable
 import java.util.UUID
@@ -16,7 +19,7 @@ data class Task(
 ) : Serializable //serializable pozwala na przesyłanie obiektu między activity
 
 enum class ColorType(val color: Color) {
-    CYAN(Color.Cyan),
-    YELLOW(Color.Yellow),
-    MAGENTA(Color.Magenta)
+    CYAN(CardGreen),
+    YELLOW(CardYellow),
+    MAGENTA(CardRed)
 }
